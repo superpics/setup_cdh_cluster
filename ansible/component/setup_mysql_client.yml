@@ -1,0 +1,11 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-18
+# function: 自动部署 mysql server
+
+  # 安装 mysql server
+  - name: 安装 mysql server
+    yum:
+      name: '{{paths.package}}/{{packages.mysql_client}}'
+      state: present

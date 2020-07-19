@@ -1,0 +1,44 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/setup_cdh_cluster/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-18
+# function: 自动部署搭建 CDH 集群
+# note: 基于 CDH 6.x
+
+# 1.0 基础配置
+# hosts 组配置 /etc/ansible/hosts
+- hosts: cdh5
+  # 开启debug
+  gather_facts: F
+  vars:
+    # 各种路径
+    paths:
+      package: /opt/setup_cdh
+    # 各种密码
+    password:
+      mysql: 123456
+    # 各种组件安装包
+    packages:
+      java: jdk-8u261-linux-x64.tar.gz
+      scala: scala-2.13.0-M4.tgz
+      mysql_server: mysql-community-server-5.7.31-1.el7.x86_64.rpm
+      mysql_client: mysql-community-client-5.7.31-1.el7.x86_64.rpm
+  remote_user: root
+  tasks:
+    # 1.配置 linux 系统环境
+    - include: ./component/setup_system_env.yml
+
+    # 2.配置 Java 环境
+    - include: ./component/setup_java_env.yml
+
+    # 3.配置 Scala 环境
+    - include: ./component/setup_scala_env.yml
+
+    # 4.配置 mysql client
+    - include: ./component/setup_mysql_client.yml
+
+    # 4.配置 mysql server
+    - include: ./component/setup_mysql_server.yml
+
+
+    # last:重启节点

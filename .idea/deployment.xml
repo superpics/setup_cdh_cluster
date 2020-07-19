@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData">
+    <serverData>
+      <paths name="cdh1">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/setup_cdh_cluster" local="$PROJECT_DIR$" web="/setup_cdh_cluster" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

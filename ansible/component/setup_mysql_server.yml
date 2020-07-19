@@ -1,0 +1,40 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-18
+# function: 自动部署 mysql server
+
+  # 安装 mysql 源
+  - name: 安装 mysql 源
+    yum:
+      name: http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
+      state: present
+
+  # 安装 mysql server
+  - name: 安装 mysql server
+    yum:
+      name: mysql-server
+      state: present
+
+  # 备份 /etc/my.cnf
+  - name: 判断 /etc/my.cnf 是否存在
+    stat:
+      path: /etc/my.cnf
+    register: mysql_config
+
+  - name: 备份 /etc/my.cnf
+    command: mv /etc/my.cnf /etc/my_bak.cnf
+    when: mysql_config.stat.exists
+
+  # 复制新 my.cnf 到 /etc 下
+  - name: 复制新 my.cnf 到 /etc 下
+    command: mv '{{paths.package}}/my.cnf' /etc/
+
+  - name: 启动 mysql server
+    service:
+      name: mysqld
+      state: started
+
+  # 安装 MySQL Driver
+  - name: 复制新 my.cnf 到 /etc 下
+    command: rm -rf /usr/share/java/mysql-connector-java.jar; cp {{paths.package}}/mysql-connector-java-*.jar /usr/share/java/mysql-connector-java.jar;

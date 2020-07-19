@@ -1,0 +1,43 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-18
+# function: 自动部署 Java 环境
+
+  - name: 清空 /etc/profile 中所有含 JAVA_HOME 的行
+    replace:
+      path: /etc/profile
+      regexp: '^.*JAVA_HOME.*$'
+      replace: ''
+
+  - name: 解压 JDK 到 /usr/local
+    unarchive:
+      src: '{{paths.package}}/{{packages.java}}'
+      dest: /usr/local
+
+  - name: 获取 JDK 解压目录名字，如：jdk1.8.0_261
+    shell: ls /usr/local/ | grep jdk1
+    register: java_home_folder
+
+  - name: 设置 JDK 软连接
+    shell: ln -snf '/usr/local/{{java_home_folder.stdout}}' /usr/local/java
+
+  - name: 检查 profile 文件是否已经配置 JAVA_HOME
+    shell: cat /etc/profile
+    register: java_home
+
+  - name: 在 profile 配置 JAVA_HOME(如果未配置)
+    shell: /bin/echo '{{ item }}' >> /etc/profile; source /etc/profile;
+    when: java_home.stdout.find('JAVA_HOME') == -1
+    loop:
+      - ""
+      - "# JAVA_HOME"
+      - "export JAVA_HOME=/usr/local/java"
+      - "export PATH=${PATH}:${JAVA_HOME}/bin"
+      - ""
+
+#  - name: echo
+#    shell: echo {{ java_home_folder.stdout }} > /tmp/a
+#  - name: debug
+#    debug: var=java_home_folder.stdout
+

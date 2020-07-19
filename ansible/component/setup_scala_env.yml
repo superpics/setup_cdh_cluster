@@ -1,0 +1,37 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-18
+# function: 自动部署 Scala 环境
+
+  - name: 清空 /etc/profile 中所有含 SCALA_HOME 的行
+    replace:
+      path: /etc/profile
+      regexp: '^.*SCALA_HOME.*$'
+      replace: ''
+
+  - name: 解压 Scala 压缩包到 /usr/local
+    unarchive:
+      src: '{{paths.package}}/{{packages.scala}}'
+      dest: /usr/local
+
+  - name: 获取 Scala 解压目录名字，如：scala-2.13.0-M4
+    shell: ls /usr/local/ | grep scala-2
+    register: scala_home_folder
+
+  - name: 设置 Scala 软连接
+    shell: ln -snf '/usr/local/{{scala_home_folder.stdout}}' /usr/local/scala
+
+  - name: 检查 profile 文件是否已经配置 SCALA_HOME
+    shell: cat /etc/profile
+    register: scala_home
+
+  - name: 在 profile 配置 SCALA_HOME(如果未配置)
+    shell: /bin/echo '{{ item }}' >> /etc/profile; source /etc/profile;
+    when: scala_home.stdout.find('SCALA_HOME') == -1
+    loop:
+      - ""
+      - "# SCALA_HOME"
+      - "export SCALA_HOME=/usr/local/scala"
+      - "export PATH=${PATH}:${SCALA_HOME}/bin"
+      - ""
