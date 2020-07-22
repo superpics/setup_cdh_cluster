@@ -4,6 +4,10 @@
 # date: 2020-07-18
 # function: 自动部署 mysql server
 
+  # 安装 MySQL Driver
+  - name: 安装 MySQL Driver
+    command: rm -rf /usr/share/java/mysql-connector-java.jar; cp {{paths.package}}/mysql-connector-java-*.jar /usr/share/java/mysql-connector-java.jar;
+
   # 安装 mysql 源
   - name: 安装 mysql 源
     yum:
@@ -35,6 +39,35 @@
       name: mysqld
       state: started
 
-  # 安装 MySQL Driver
-  - name: 复制新 my.cnf 到 /etc 下
-    command: rm -rf /usr/share/java/mysql-connector-java.jar; cp {{paths.package}}/mysql-connector-java-*.jar /usr/share/java/mysql-connector-java.jar;
+  # 构建 CDH 集群组件数据库
+  - name: 删除列表中的数据库
+    mysql_db:
+      name:
+        - scm
+        - amon
+        - rman
+        - hive
+        - sentry
+        - nav
+        - navms
+        - oozie
+        - hue
+        - test
+      state: absent
+
+  # 构建 CDH 集群组件数据库
+  - name: 创建列表中的数据库
+    mysql_db:
+      name: scm
+      encoding: utf8
+      state: present
+
+  # todo 待测试
+  - name: scm 下所有表的权限开放给 scm 用户
+    mysql_user:
+      name: scm
+      password: scm_default_pwd
+      priv: 'scm.*:ALL'
+      state: present
+
+

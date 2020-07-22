@@ -1,0 +1,15 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-23
+# function: 自动部署 Python 2 环境
+
+  # 下载 pip
+  # 参阅  https://pip.pypa.io/en/stable/installing/
+  - name: 安装 pip 20.1.1
+    shell: python "{{paths.package}}/get-pip.py"
+
+    # 安装 pymysql
+  - name: 安装 pymysql
+    shell: pip install pymysql
+

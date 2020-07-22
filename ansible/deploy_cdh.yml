@@ -3,7 +3,13 @@
 # author: Jesse.liu
 # date: 2020-07-18
 # function: 自动部署搭建 CDH 集群
-# note: 基于 CDH 6.x
+# 版本要求:
+# CDH 6.x
+# Ansible 2.7.2
+# Python 2.7.5
+
+# python 模块要求：
+# PyMySQL - 安装命令：pip install pymysql
 
 # 1.0 基础配置
 # hosts 组配置 /etc/ansible/hosts
@@ -29,13 +35,16 @@
     - include: ./component/setup_system_env.yml
 
     # 2.配置 Java 环境
-    - include: ./component/setup_java_env.yml
+#    - include: ./component/setup_java_env.yml
 
     # 3.配置 Scala 环境
-    - include: ./component/setup_scala_env.yml
+#    - include: ./component/setup_scala_env.yml
+
+    # 3.配置 Python 环境
+    - include: ./component/setup_python_env.yml
 
     # 4.配置 mysql client
-    - include: ./component/setup_mysql_client.yml
+#    - include: ./component/setup_mysql_client.yml
 
     # 4.配置 mysql server
     - include: ./component/setup_mysql_server.yml
