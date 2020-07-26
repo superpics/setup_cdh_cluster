@@ -10,17 +10,29 @@
       regexp: '^.*JAVA_HOME.*$'
       replace: ''
 
-  - name: 解压 JDK 到 /usr/local
+  - name: 清空 /etc/profile 中所有含 JRE_HOME 的行
+    replace:
+      path: /etc/profile
+      regexp: '^.*JRE_HOME.*$'
+      replace: ''
+
+  - name: 创建目录 /usr/java
+    file:
+      path: /usr/java
+      state: directory
+      mode: '0755'
+
+  - name: 解压 JDK 到 /usr/java/
     unarchive:
       src: '{{paths.package}}/{{packages.java}}'
-      dest: /usr/local
+      dest: /usr/java
 
   - name: 获取 JDK 解压目录名字，如：jdk1.8.0_261
-    shell: ls /usr/local/ | grep jdk1
+    shell: ls /usr/java/ | grep jdk1
     register: java_home_folder
 
-  - name: 设置 JDK 软连接
-    shell: ln -snf '/usr/local/{{java_home_folder.stdout}}' /usr/local/java
+#  - name: 设置 JDK 软连接
+#    shell: ln -snf '/usr/java/{{java_home_folder.stdout}}' /usr/local/java
 
   - name: 检查 profile 文件是否已经配置 JAVA_HOME
     shell: cat /etc/profile
@@ -32,8 +44,9 @@
     loop:
       - ""
       - "# JAVA_HOME"
-      - "export JAVA_HOME=/usr/local/java"
-      - "export PATH=${PATH}:${JAVA_HOME}/bin"
+      - "export JAVA_HOME=/usr/java/{{java_home_folder.stdout}}"
+      - "export JRE_HOME=/usr/java/{{java_home_folder.stdout}}/jre"
+      - "export PATH=${PATH}:${JAVA_HOME}/bin:${JRE_HOME}/bin"
       - ""
 
 #  - name: echo

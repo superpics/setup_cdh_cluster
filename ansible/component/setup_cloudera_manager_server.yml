@@ -1,0 +1,43 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-25
+# function: 安装 Cloudera Manager Server
+# 参阅 https://docs.cloudera.com/documentation/enterprise/6/6.3/topics/install_cm_server.html
+
+
+
+  # 安装 yum 源的 GPG key
+  # https://docs.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cm_6_version_download.html
+  - name: 安装 yum 源的 GPG key
+    rpm_key:
+      state: present
+      key: https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/RPM-GPG-KEY-cloudera
+
+
+  - name: yum 方式安装 cloudera-manager-daemons、cloudera-manager-agent、cloudera-manager-server
+    yum:
+      name:
+        - cloudera-manager-daemons
+        - cloudera-manager-agent
+        - cloudera-manager-server
+      state: present
+
+#  - name: rpm 方式安装 cloudera-manager-agent
+#    yum:
+#      name: '{{paths.package}}/{{packages.cloudera_manager_agent}}'
+#      state: present
+#
+#  - name: rpm 方式安装 cloudera-manager-daemons
+#    yum:
+#      name: '{{paths.package}}/{{packages.cloudera_manager_daemons}}'
+#      state: present
+#
+#  - name: rpm 方式安装 cloudera-manager-server
+#    yum:
+#      name: '{{paths.package}}/{{packages.cloudera_manager_server}}'
+#      state: present
+
+  # 需要安装完  cloudera-manager-daemons cloudera-manager-agent cloudera-manager-server 才有该脚本
+  - name: 初始化 scm 数据库
+    command: /opt/cloudera/cm/schema/scm_prepare_database.sh mysql scm scm

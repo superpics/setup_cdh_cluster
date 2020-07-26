@@ -1,0 +1,15 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-07-25
+# function: 各个节点添加本地 Yum 源
+# CDH 官方配置本地仓库步骤：https://docs.cloudera.com/documentation/enterprise/6/6.2/topics/cm_ig_create_local_package_repo.html#internal_package_repo
+
+  # 安装本地源
+  # https://docs.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cm_6_version_download.html
+  - name: 安装本地 yum 源
+    yum_repository:
+      name: cloudera_setup_cdh
+      description: 含有 cloudera-manager-daemons、cloudera-manager-agent、cloudera-manager-server、mysql-server、mysql-client
+      baseurl: '{{url.cloudera_baseurl_local}}'
+

@@ -2,72 +2,249 @@
 # 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
 # author: Jesse.liu
 # date: 2020-07-18
-# function: 自动部署 mysql server
+# function: 自动部署 mysql server & client
+# CDH 官方 mysql 安装指南：https://docs.cloudera.com/documentation/enterprise/6/6.3/topics/cm_ig_mysql.html
 
   # 安装 MySQL Driver
-  - name: 安装 MySQL Driver
-    command: rm -rf /usr/share/java/mysql-connector-java.jar; cp {{paths.package}}/mysql-connector-java-*.jar /usr/share/java/mysql-connector-java.jar;
+#  - name: 安装 MySQL Driver
+#    command: rm -rf /usr/share/java/mysql-connector-java.jar; cp {{paths.package}}/mysql-connector-java-*.jar /usr/share/java/mysql-connector-java.jar
 
-  # 安装 mysql 源
-  - name: 安装 mysql 源
+  - name: 卸载可能与 mysql 冲突的包
     yum:
-      name: http://repo.mysql.com/mysql-community-release-el7-5.noarch.rpm
-      state: present
+      name: '{{item}}'
+      state: absent
+    loop:
+      - 'mariadb-libs'
 
-  # 安装 mysql server
-  - name: 安装 mysql server
+  - name: 安装 mysql 及其依赖
     yum:
-      name: mysql-server
+      name: '{{paths.package}}/{{item}}'
       state: present
+    loop:
+      - 'mysql-community-common-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-libs-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-libs-compat-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-devel-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-embedded-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-embedded-compat-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-embedded-devel-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-client-5.7.30-1.el7.x86_64.rpm'
+      - 'mysql-community-server-5.7.30-1.el7.x86_64.rpm'
+#     - 'mysql-community-test-5.7.30-1.el7.x86_64.rpm'
 
-  # 备份 /etc/my.cnf
-  - name: 判断 /etc/my.cnf 是否存在
-    stat:
-      path: /etc/my.cnf
-    register: mysql_config
 
-  - name: 备份 /etc/my.cnf
-    command: mv /etc/my.cnf /etc/my_bak.cnf
-    when: mysql_config.stat.exists
-
-  # 复制新 my.cnf 到 /etc 下
-  - name: 复制新 my.cnf 到 /etc 下
-    command: mv '{{paths.package}}/my.cnf' /etc/
+#  # 备份 /etc/my.cnf
+#  - name: 判断 /etc/my.cnf 是否存在
+#    stat:
+#      path: /etc/my.cnf
+#    register: mysql_config
+#
+#  - name: 备份 /etc/my.cnf
+#    command: mv /etc/my.cnf /etc/my_bak.cnf
+#    when: mysql_config.stat.exists
+#
+#  # 复制新 my.cnf 到 /etc 下
+#  - name: 复制新 my.cnf 到 /etc 下
+#    command: mv '{{paths.package}}/my.cnf' /etc/
+#
+#  - name: 修改 /etc/my.cnf 权限为 644
+#    file:
+#      path: /etc/my.cnf
+#      mode: '0644'
 
   - name: 启动 mysql server
-    service:
-      name: mysqld
-      state: started
+    command: systemctl start mysqld
+
+  - name: 获取 mysql 初始密码
+    shell: "grep 'temporary password' /var/log/mysqld.log | tail -n 1 | grep -P 'root@localhost: .+' -o | sed 's/root@localhost: //g'"
+    register: mysql_pwd
+
+  - name: 保存 mysql 初始密码
+    shell: echo "{{mysql_pwd.stdout}}" > /tmp/mp
+
+  - name: 设置密码
+    shell: mysql -uroot  -p'{{mysql_pwd.stdout}}' --connect-expired-password  -e 'alter user "root"@"localhost" identified by "{{password.mysql}}"'
+
+#  - name: 设置 root 密码
+#    mysql_user:
+#      user: name=root
+#      update_password: always
+#      password: 123456
 
   # 构建 CDH 集群组件数据库
-  - name: 删除列表中的数据库
-    mysql_db:
-      name:
-        - scm
-        - amon
-        - rman
-        - hive
-        - sentry
-        - nav
-        - navms
-        - oozie
-        - hue
-        - test
-      state: absent
+#  - name: 删除列表中的数据库
+#    mysql_db:
+#      login_user: root
+#      login_password: "{{mysql_pwd.stdout}}"
+#      name:
+#        - scm
+#        - amon
+#        - rman
+#        - hive
+#        - sentry
+#        - nav
+#        - navms
+#        - oozie
+#        - hue
+#        - test
+#      state: absent
 
   # 构建 CDH 集群组件数据库
-  - name: 创建列表中的数据库
+  - name: 创建 scm 数据库
     mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
       name: scm
       encoding: utf8
       state: present
 
-  # todo 待测试
-  - name: scm 下所有表的权限开放给 scm 用户
+  - name: 创建 amon 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: amon
+      encoding: utf8
+      state: present
+
+  - name: 创建 rman 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: rman
+      encoding: utf8
+      state: present
+
+  - name: 创建 hive 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: hive
+      encoding: utf8
+      state: present
+
+  - name: 创建 sentry 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: sentry
+      encoding: utf8
+      state: present
+
+  - name: 创建 nav 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: nav
+      encoding: utf8
+      state: present
+
+  - name: 创建 navms 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: navms
+      encoding: utf8
+      state: present
+
+  - name: 创建 oozie 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: oozie
+      encoding: utf8
+      state: present
+
+  - name: 创建 hue 数据库
+    mysql_db:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: hue
+      encoding: utf8
+      state: present
+
+  # 改密码设置用户权限
+  - name: 开放 scm 库下所有表的权限给 scm 用户
     mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
       name: scm
-      password: scm_default_pwd
+      password: "{{password.scm}}"
       priv: 'scm.*:ALL'
       state: present
 
+  - name: 开放 amon 库下所有表的权限给 amon 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: amon
+      password: "{{password.amon}}"
+      priv: 'amon.*:ALL'
+      state: present
 
+  - name: 开放 rman 库下所有表的权限给 rman 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: rman
+      password: "{{password.rman}}"
+      priv: 'rman.*:ALL'
+      state: present
+
+  - name: 开放 hive 库下所有表的权限给 hive 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: hive
+      password: "{{password.hive}}"
+      priv: 'hive.*:ALL'
+      state: present
+
+  - name: 开放 sentry 库下所有表的权限给 sentry 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: sentry
+      password: "{{password.sentry}}"
+      priv: 'sentry.*:ALL'
+      state: present
+
+  - name: 开放 nav 库下所有表的权限给 nav 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: nav
+      password: "{{password.nav}}"
+      priv: 'nav.*:ALL'
+      state: present
+
+  - name: 开放 navms 库下所有表的权限给 navms 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: navms
+      password: "{{password.navms}}"
+      priv: 'navms.*:ALL'
+      state: present
+
+  - name: 开放 oozie 库下所有表的权限给 oozie 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: oozie
+      password: "{{password.oozie}}"
+      priv: 'oozie.*:ALL'
+      state: present
+
+
+  - name: 开放 hue 库下所有表的权限给 hue 用户
+    mysql_user:
+      login_user: root
+      login_password: "{{password.mysql}}"
+      name: hue
+      password: "{{password.hue}}"
+      priv: 'hue.*:ALL'
+      state: present
+
+
+  # 安全配置 mysql
+  # todo /usr/bin/mysql_secure_installation
