@@ -1,5 +1,3 @@
-[toc]
-
 
 > 部署一个 CDH 集群，在节点数量特别多的时候，这将是一件工作量巨大的任务，机械且重复的步骤实际上可以有脚本去完成。用 shell 实现比较难以维护、不够优雅，于是便有了这个基于 [ansible](https://baike.baidu.com/item/Ansible/20194655) 的 CDH 集群自动部署脚本，实际上只需要编写 yml 配置文件即可告诉 ansible 我们需要做的事情。代码已经上传到 [github](https://github.com/iconsider/setup_cdh_cluster)，要根据实际集群节点数修改 ansible 主机配置 /etc/ansible/hosts 
 
