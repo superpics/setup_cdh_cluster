@@ -5,132 +5,51 @@
 # function: 自动部署搭建 CDH 集群
 # 版本要求:
 # CDH 6.2.0
-# Ansible 2.7.2
+# Ansible 2.8.12
 # Python 2.7.5
+
+# 约定：手动上传的安装包和执行 ansible 必须在同一个节点
+# 路径1： /opt/base_file/packages
+# 路径2： /opt/base_file/parcels
+
+
+# 一定要修改 local_yum_repo 变量
+
+# ansible 安装：sudo yum -y install ansible
+# 检查 ansible 版本：ansible --version
 
 # python 模块要求：
 # PyMySQL - 安装命令：pip install pymysql
 
-
-- hosts: master_node
-  # 开启debug
-  gather_facts: F
-  vars:
-    # 各种路径
-    paths:
-      package: /opt/setup_cdh
-    # 各种密码
-    password:
-      mysql: 123456
-    # 各种组件安装包
-    packages:
-      cloudera_manager_agent: cloudera-manager-agent-6.2.0-968826.el7.x86_64.rpm
-      cloudera_manager_daemons: cloudera-manager-daemons-6.2.0-968826.el7.x86_64.rpm
-      cloudera_manager_server: cloudera-manager-server-6.2.0-968826.el7.x86_64.rpm
-      cloudera_manager_server_db: cloudera-manager-server-db-2-6.2.0-968826.el7.x86_64.rpm
-#      mysql_server: mysql-community-server-5.7.30-1.el7.x86_64.rpm
-
-  remote_user: root
-
-  tasks:
-    # 1.配置本地仓库服务
-    - include: ./component/setup_local_repository.yml
-
-
-
-## 1.0 基础配置
-## hosts 组配置 /etc/ansible/hosts
-#- hosts: all_node
-#  # 开启debug
-#  gather_facts: F
-#  vars:
-#    # 各种路径
-#    paths:
-#      package: /opt/setup_cdh
-#    # 各种密码
-#    password:
-#      mysql: 123456
-#    # 各种组件安装包
-#    packages:
-#      java: jdk-8u261-linux-x64.tar.gz
-#      scala: scala-2.13.0-M4.tgz
-#      mysql_driver: mysql-connector-java-5.1.47.jar
-##      mysql_client: mysql-community-client-5.7.30-1.el7.x86_64.rpm
-#
-#    # 各种链接
-#    url:
-#      cloudera_baseurl: https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/
-#      cloudera_baseurl_local: http://192.168.220.31/cloudera-repos/cm6/
-#
-#  remote_user: root
-#
-#  tasks:
-#    # 1.配置 linux 系统环境
-##    - include: ./component/setup_system_env.yml
-#
-#    # 2.配置 Java 环境
-#    #    - include: ./component/setup_java_env.yml
-#
-#    # 3.配置 Scala 环境
-#    #    - include: ./component/setup_scala_env.yml
-#
-#    # 4.配置 Python 环境
-#    #    - include: ./component/setup_python_env.yml
-#
-#    # 5.配置 mysql server
-#    #    - include: ./component/setup_mysql_server.yml
-#
-#    # 安装 yum 源文件
-##    - include: ./component/setup_local_yum.yml
-#
-#    # 7.配置 cloudera manager server
-##    - include: ./component/setup_cloudera_manager_server.yml
-#
-#    # last:重启节点
-
-
-
-
-
-# 测试
 # hosts 组配置 /etc/ansible/hosts
-- hosts: cdh5
+
+
+
+
+
+
+
+
+
+# 基础环境配置
+- hosts: all_node
   # 开启debug
   gather_facts: F
   vars:
+    # 本地 yum 源节点
+    local_yum_repo: cdh1
     # 各种路径
     paths:
+      base_file: /opt/base_file
       package: /opt/setup_cdh
-    # 各种密码，注意新版 mysql 对密码有严格要求
-    password:
-      mysql: SuperMan2020#h
-      scm: SuperMan2020#h
-      amon: SuperMan2020#h
-      rman: SuperMan2020#h
-      hive: SuperMan2020#h
-      sentry: SuperMan2020#h
-      nav: SuperMan2020#h
-      navms: SuperMan2020#h
-      oozie: SuperMan2020#h
-      hue: SuperMan2020#h
     # 各种组件安装包
     packages:
       java: jdk-8u261-linux-x64.tar.gz
       scala: scala-2.13.0-M4.tgz
       mysql_driver: mysql-connector-java-5.1.47.jar
-      # todo, 注释掉 server
-#      mysql_server: mysql-community-server-5.7.30-1.el7.x86_64.rpm
-#      mysql_client: mysql-community-client-5.7.30-1.el7.x86_64.rpm
-
-#      cloudera_manager_agent: cloudera-manager-agent-6.2.0-968826.el7.x86_64.rpm
-#      cloudera_manager_daemons: cloudera-manager-daemons-6.2.0-968826.el7.x86_64.rpm
-#      cloudera_manager_server: cloudera-manager-server-6.2.0-968826.el7.x86_64.rpm
-#      cloudera_manager_server_db: cloudera-manager-server-db-2-6.2.0-968826.el7.x86_64.rpm
     # 各种链接
     url:
       cloudera_baseurl: https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/
-      cloudera_baseurl_local: http://192.168.220.31/cloudera-repos/cm6/
-
   remote_user: root
 
   tasks:
@@ -146,13 +65,115 @@
     # 4.配置 Python 环境
     - include: ./component/setup_python_env.yml
 
-    # todo, 5.配置 mysql，分一个 client 出来
-    - include: ./component/setup_mysql_server.yml
 
-    # 安装 yum 源文件
+
+
+
+
+
+
+
+# 基础服务
+- hosts: master_node
+  # 开启debug
+  gather_facts: F
+  vars:
+    # 各种路径
+    paths:
+      package: /opt/setup_cdh
+    packages:
+      cloudera_manager_agent: cloudera-manager-agent-6.2.0-968826.el7.x86_64.rpm
+      cloudera_manager_daemons: cloudera-manager-daemons-6.2.0-968826.el7.x86_64.rpm
+      cloudera_manager_server: cloudera-manager-server-6.2.0-968826.el7.x86_64.rpm
+      cloudera_manager_server_db: cloudera-manager-server-db-2-6.2.0-968826.el7.x86_64.rpm
+  remote_user: root
+
+  tasks:
+    # 1.配置本地仓库服务
+    - include: ./component/setup_local_repository.yml
+
+
+
+
+
+
+
+
+
+
+
+# CDH 服务安装
+- hosts: all_node
+  # 开启debug
+  gather_facts: F
+  vars:
+    # 本地 yum 源节点
+    local_yum_repo: cdh1
+    # 各种路径
+    paths:
+      package: /opt/setup_cdh
+    # 各种组件安装包
+    packages:
+      java: jdk-8u261-linux-x64.tar.gz
+      scala: scala-2.13.0-M4.tgz
+      mysql_driver: mysql-connector-java-5.1.47.jar
+
+    # 各种链接
+    url:
+      cloudera_baseurl: https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/
+      cloudera_baseurl_local: "http://{{local_yum_repo}}/cloudera-repos/cm6/"
+    password:
+      scm: SuperMan2020#h
+
+  remote_user: root
+
+  tasks:
+    # 1. 安装 yum 源文件
     - include: ./component/setup_local_yum.yml
 
-    # 7.配置 cloudera manager server
-    - include: ./component/setup_cloudera_manager_server.yml
+    # 2.配置 mysql client
+    - include: ./component/setup_mysql_client.yml
 
+    # 3.配置 cloudera manager slave
+    - include: ./component/setup_cloudera_manager_slave.yml
     # last:重启节点
+
+
+
+
+
+# CDH 服务安装
+- hosts: master_node
+  # 开启debug
+  gather_facts: F
+  vars:
+    # 各种路径
+    paths:
+      base_file: /opt/base_file
+      package: /opt/setup_cdh
+    # 各种密码，注意新版 mysql 对密码有严格要求
+    password:
+      mysql: Cloudera!20200801
+      # cloudera manager server
+      scm: SuperMan2020#h
+      # activity monitor
+      amon: SuperMan2020#h
+      # Reports Manager
+      rman: SuperMan2020#h
+      hive: SuperMan2020#h
+      # sentry server
+      sentry: SuperMan2020#h
+      # cloudera navigator audit server
+      nav: SuperMan2020#h
+      # cloudera navigator metadata server
+      navms: SuperMan2020#h
+      oozie: SuperMan2020#h
+      hue: SuperMan2020#h
+  remote_user: root
+
+  tasks:
+    # 1.配置 mysql server（从本地 yum 源安装）
+    - include: ./component/setup_mysql_server.yml
+
+    # 2.配置 cloudera manager server
+    - include: ./component/setup_cloudera_manager_master.yml

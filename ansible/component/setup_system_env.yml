@@ -1,5 +1,5 @@
 ---
-# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# 运行样例：ansible-playbook /opt/auto-deployment/setup_cdh_cluster/ansible/deploy_cdh.yml
 # author: Jesse.liu
 # date: 2020-07-18
 # function: 自动配置 linux 系统环境
@@ -41,7 +41,6 @@
         - vim
         - sysstat
         - screen
-        - createrepo
       state: present
 
   # 更新 yum 现有程序
@@ -51,10 +50,10 @@
       state: latest
 
   # 清空 /opt/setup_cdh
-  - name: 清空 /opt/setup_cdh
-    file:
-      path: '{{paths.package}}'
-      state: absent
+#  - name: 清空 /opt/setup_cdh
+#    file:
+#      path: '{{paths.package}}'
+#      state: absent
 
   # 1.4 创建安装包目录
   # https://docs.ansible.com/ansible/latest/modules/file_module.html#examples
@@ -66,10 +65,10 @@
 
   # 1.5 分发安装包、驱动
   # https://docs.ansible.com/ansible/latest/modules/copy_module.html#id5
-  - name: 分发安装包、驱动到计算节点
+  - name: 分发安装包、驱动到计算节点（自动覆盖修改过的文件）
     copy:
-      src: '{{paths.package}}'
-      dest: /opt/
+      src: '{{paths.base_file}}/packages/'
+      dest: '{{paths.package}}'
       owner: root
       group: root
       mode: u=rwx,g=rwx,o=rwx
@@ -82,6 +81,3 @@
 
   - name: 安装 mysql 驱动 到 /usr/share/java
     command: cp '{{paths.package}}/{{packages.mysql_driver}}' /usr/share/java/mysql-connector-java.jar
-
-
-  # todo，设置 NTP

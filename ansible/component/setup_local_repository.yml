@@ -1,5 +1,5 @@
 ---
-# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# 运行样例：ansible-playbook /opt/auto-deployment/setup_cdh_cluster/ansible/deploy_cdh.yml
 # author: Jesse.liu
 # date: 2020-07-25
 # function: 配置本地的 yum 源，实际上是一个 web 服务
@@ -36,14 +36,12 @@
   - name: 拷贝 cloudera-manager-server-db-xxx.rpm 文件到本地仓库
     command: cp '{{paths.package}}/{{packages.cloudera_manager_server_db}}' /var/www/html/cloudera-repos/cm6
 
+  - name: 安装 createrepo 命令
+    yum:
+      name:
+        - createrepo
+      state: present
 
-
-#  - name: 拷贝 mysql_server 文件到本地仓库
-#    command: cp '{{paths.package}}/{{packages.mysql_server}}' /var/www/html/cloudera-repos/cm6
-#
-#  - name: 拷贝 mysql_client 文件到本地仓库
-#    command: cp '{{paths.package}}/{{packages.mysql_client}}' /var/www/html/cloudera-repos/cm6
-
-
+  # createrepo 在创建本地 yum 源时使用
   - name: 创建 repo 目录
     command: createrepo /var/www/html/cloudera-repos/cm6

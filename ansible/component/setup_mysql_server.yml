@@ -1,13 +1,9 @@
 ---
-# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# 运行样例：ansible-playbook /opt/auto-deployment/setup_cdh_cluster/ansible/deploy_cdh.yml
 # author: Jesse.liu
 # date: 2020-07-18
 # function: 自动部署 mysql server & client
 # CDH 官方 mysql 安装指南：https://docs.cloudera.com/documentation/enterprise/6/6.3/topics/cm_ig_mysql.html
-
-  # 安装 MySQL Driver
-#  - name: 安装 MySQL Driver
-#    command: rm -rf /usr/share/java/mysql-connector-java.jar; cp {{paths.package}}/mysql-connector-java-*.jar /usr/share/java/mysql-connector-java.jar
 
   - name: 卸载可能与 mysql 冲突的包
     yum:
@@ -30,30 +26,40 @@
       - 'mysql-community-embedded-devel-5.7.30-1.el7.x86_64.rpm'
       - 'mysql-community-client-5.7.30-1.el7.x86_64.rpm'
       - 'mysql-community-server-5.7.30-1.el7.x86_64.rpm'
-#     - 'mysql-community-test-5.7.30-1.el7.x86_64.rpm'
 
-
-#  # 备份 /etc/my.cnf
-#  - name: 判断 /etc/my.cnf 是否存在
-#    stat:
-#      path: /etc/my.cnf
-#    register: mysql_config
-#
-#  - name: 备份 /etc/my.cnf
-#    command: mv /etc/my.cnf /etc/my_bak.cnf
-#    when: mysql_config.stat.exists
-#
-#  # 复制新 my.cnf 到 /etc 下
-#  - name: 复制新 my.cnf 到 /etc 下
-#    command: mv '{{paths.package}}/my.cnf' /etc/
-#
-#  - name: 修改 /etc/my.cnf 权限为 644
-#    file:
-#      path: /etc/my.cnf
-#      mode: '0644'
 
   - name: 启动 mysql server
     command: systemctl start mysqld
+
+  - name: 删除 /var/lib/mysql/ib_logfile0
+    file:
+      path: '/var/lib/mysql/ib_logfile0'
+      state: absent
+
+  - name: 删除 /var/lib/mysql/ib_logfile1
+    file:
+      path: '/var/lib/mysql/ib_logfile1'
+      state: absent
+
+  # 备份 /etc/my.cnf
+  - name: 判断 /etc/my.cnf 是否存在
+    stat:
+      path: /etc/my.cnf
+    register: mysql_config
+
+  - name: 备份 /etc/my.cnf
+    command: mv /etc/my.cnf /etc/my_bak.cnf
+    when: mysql_config.stat.exists
+
+  # 复制新 my.cnf 到 /etc 下
+  - name: 复制新 my.cnf 到 /etc 下
+    command: mv '{{paths.package}}/my.cnf' /etc/
+
+  - name: 修改 /etc/my.cnf 权限为 644
+    file:
+      path: /etc/my.cnf
+      mode: '0644'
+
 
   - name: 获取 mysql 初始密码
     shell: "grep 'temporary password' /var/log/mysqld.log | tail -n 1 | grep -P 'root@localhost: .+' -o | sed 's/root@localhost: //g'"
@@ -62,14 +68,11 @@
   - name: 保存 mysql 初始密码
     shell: echo "{{mysql_pwd.stdout}}" > /tmp/mp
 
-  - name: 设置密码
+  - name: 设置 mysql root 用户密码
     shell: mysql -uroot  -p'{{mysql_pwd.stdout}}' --connect-expired-password  -e 'alter user "root"@"localhost" identified by "{{password.mysql}}"'
 
-#  - name: 设置 root 密码
-#    mysql_user:
-#      user: name=root
-#      update_password: always
-#      password: 123456
+  - name: 启动 mysql server
+    command: systemctl start mysqld
 
   # 构建 CDH 集群组件数据库
 #  - name: 删除列表中的数据库
@@ -170,6 +173,7 @@
       name: scm
       password: "{{password.scm}}"
       priv: 'scm.*:ALL'
+      host: '%'
       state: present
 
   - name: 开放 amon 库下所有表的权限给 amon 用户
@@ -179,6 +183,7 @@
       name: amon
       password: "{{password.amon}}"
       priv: 'amon.*:ALL'
+      host: '%'
       state: present
 
   - name: 开放 rman 库下所有表的权限给 rman 用户
@@ -188,6 +193,7 @@
       name: rman
       password: "{{password.rman}}"
       priv: 'rman.*:ALL'
+      host: '%'
       state: present
 
   - name: 开放 hive 库下所有表的权限给 hive 用户
@@ -197,6 +203,7 @@
       name: hive
       password: "{{password.hive}}"
       priv: 'hive.*:ALL'
+      host: '%'
       state: present
 
   - name: 开放 sentry 库下所有表的权限给 sentry 用户
@@ -206,6 +213,7 @@
       name: sentry
       password: "{{password.sentry}}"
       priv: 'sentry.*:ALL'
+      host: '%'
       state: present
 
   - name: 开放 nav 库下所有表的权限给 nav 用户
@@ -215,6 +223,7 @@
       name: nav
       password: "{{password.nav}}"
       priv: 'nav.*:ALL'
+      host: '%'
       state: present
 
   - name: 开放 navms 库下所有表的权限给 navms 用户
@@ -224,6 +233,7 @@
       name: navms
       password: "{{password.navms}}"
       priv: 'navms.*:ALL'
+      host: '%'
       state: present
 
   - name: 开放 oozie 库下所有表的权限给 oozie 用户
@@ -233,6 +243,7 @@
       name: oozie
       password: "{{password.oozie}}"
       priv: 'oozie.*:ALL'
+      host: '%'
       state: present
 
 
@@ -243,6 +254,7 @@
       name: hue
       password: "{{password.hue}}"
       priv: 'hue.*:ALL'
+      host: '%'
       state: present
 
 

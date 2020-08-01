@@ -1,0 +1,28 @@
+---
+# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# author: Jesse.liu
+# date: 2020-08-01
+# function: 安装 Cloudera Manager Slave
+# 参阅 https://docs.cloudera.com/documentation/enterprise/6/6.3/topics/install_cm_server.html
+
+
+
+  # 安装 yum 源的 GPG key
+  # https://docs.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cm_6_version_download.html
+  - name: 安装 yum 源的 GPG key
+    rpm_key:
+      state: present
+      key: https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/RPM-GPG-KEY-cloudera
+
+
+  - name: yum 方式安装 cloudera-manager-daemons、cloudera-manager-agent
+    yum:
+      name:
+        - cloudera-manager-daemons
+        - cloudera-manager-agent
+      state: present
+
+  - name: 启动 cloudera-scm-agent
+    service:
+      name: cloudera-scm-agent
+      state: started

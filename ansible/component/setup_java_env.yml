@@ -1,5 +1,5 @@
 ---
-# 运行样例：ansible-playbook /opt/auto-deployment/cdh-setup/org/iconsider/cdh/ansible/deploy_cdh.yml
+# 运行样例：ansible-playbook /opt/auto-deployment/setup_cdh_cluster/ansible/deploy_cdh.yml
 # author: Jesse.liu
 # date: 2020-07-18
 # function: 自动部署 Java 环境

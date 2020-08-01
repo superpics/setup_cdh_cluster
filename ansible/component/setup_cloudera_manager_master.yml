@@ -14,30 +14,26 @@
       state: present
       key: https://archive.cloudera.com/cm6/6.3.1/redhat7/yum/RPM-GPG-KEY-cloudera
 
-
-  - name: yum 方式安装 cloudera-manager-daemons、cloudera-manager-agent、cloudera-manager-server
+  - name: yum 方式安装 cloudera-manager-server
     yum:
       name:
-        - cloudera-manager-daemons
-        - cloudera-manager-agent
         - cloudera-manager-server
       state: present
 
-#  - name: rpm 方式安装 cloudera-manager-agent
-#    yum:
-#      name: '{{paths.package}}/{{packages.cloudera_manager_agent}}'
-#      state: present
-#
-#  - name: rpm 方式安装 cloudera-manager-daemons
-#    yum:
-#      name: '{{paths.package}}/{{packages.cloudera_manager_daemons}}'
-#      state: present
-#
-#  - name: rpm 方式安装 cloudera-manager-server
-#    yum:
-#      name: '{{paths.package}}/{{packages.cloudera_manager_server}}'
-#      state: present
-
   # 需要安装完  cloudera-manager-daemons cloudera-manager-agent cloudera-manager-server 才有该脚本
   - name: 初始化 scm 数据库
-    command: /opt/cloudera/cm/schema/scm_prepare_database.sh mysql scm scm
+    command: /opt/cloudera/cm/schema/scm_prepare_database.sh mysql scm scm "{{password.scm}}"
+
+  - name: 启动 cloudera-scm-server
+    service:
+      name: cloudera-scm-server
+      state: started
+
+
+  - name: 复制 parcel 到 /opt/cloudera/parcel-repo
+    copy:
+      src: '{{paths.base_file}}/parcels/'
+      dest: '/opt/cloudera/parcel-repo'
+      owner: cloudera-scm
+      group: cloudera-scm
+      mode: u=rwx,g=rwx,o=rwx
