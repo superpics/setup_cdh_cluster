@@ -61,7 +61,7 @@ ansible --version
 ```
 
 #### 上传组件安装包
-百度云下载链接（总大小 4.49 GB）：[https://pan.baidu.com/s/1mN8adHylRTNEYBQbv1m5nw](https://pan.baidu.com/s/1mN8adHylRTNEYBQbv1m5nw)  密码：hive
+百度云下载链接（总大小 4.49 GB）：[https://pan.baidu.com/s/1SI3Id6V_2_6LEHRAiwnNrg](https://pan.baidu.com/s/1SI3Id6V_2_6LEHRAiwnNrg)  密码：6oyj
 
 压缩包内容:
 
